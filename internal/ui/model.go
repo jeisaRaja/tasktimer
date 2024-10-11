@@ -2,14 +2,18 @@ package ui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jeisaRaja/tasktimer/internal/task"
 )
 
 type Model struct {
-	EditTab tea.Model
+	TaskService *task.TaskService
+	EditTab     tea.Model
 }
 
-func newModel() Model {
-	return Model{}
+func newModel(ts *task.TaskService) Model {
+	return Model{
+		TaskService: ts,
+	}
 }
 
 func (m Model) Init() tea.Cmd {

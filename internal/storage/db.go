@@ -9,6 +9,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// ConnectDB initializes a connection to sqlite database,
+// creating db file `tasktimer.db` in current working directory.
+// It also creates necessary tables for the program
 func ConnectDB() *sql.DB {
 	var dbPath string
 
@@ -29,6 +32,9 @@ func ConnectDB() *sql.DB {
 	return conn
 }
 
+// createTable creates the required tables for the task management system
+// within the connected database. It checks for the existence of each
+// table and creates it if it does not exist.
 func createTable(conn *sql.DB) {
 	createTask := `CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,6 +95,8 @@ func createTable(conn *sql.DB) {
 	}
 }
 
+// ConnectTestDB establishes a connection to an in-memory sqlite database
+// for testing purposes.
 func ConnectTestDB() *sql.DB {
 	conn, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
