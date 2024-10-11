@@ -1,0 +1,100 @@
+package storage
+
+import (
+	"database/sql"
+	"log"
+	"os"
+	"path"
+
+	_ "github.com/mattn/go-sqlite3"
+)
+
+func ConnectDB() *sql.DB {
+	var dbPath string
+
+	baseDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbPath = path.Join(baseDir, "tasktimer.db")
+	conn, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	createTable(conn)
+
+	return conn
+}
+
+func createTable(conn *sql.DB) {
+	createTask := `CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    time_spent INTEGER DEFAULT 0, 
+    schedule TEXT,
+    recurring_days TEXT
+);`
+
+	_, err := conn.Exec(createTask)
+	if err != nil {
+		log.Printf("%q: %s\n", err, createTask)
+		return
+	}
+
+	createDailyTask := `CREATE TABLE IF NOT EXISTS daily_tasks (
+    task_id INTEGER NOT NULL,
+    date DATE NOT NULL,
+    daily_target INTEGER DEFAULT 0,
+    time_spent INTEGER DEFAULT 0,
+    PRIMARY KEY (task_id, date),
+    FOREIGN KEY (task_id) REFERENCES task(id)
+);`
+
+	_, err = conn.Exec(createDailyTask)
+	if err != nil {
+		log.Printf("%q: %s\n", err, createDailyTask)
+		return
+	}
+
+	createSchedule := `CREATE TABLE IF NOT EXISTS schedule (
+    day INTEGER NOT NULL,
+    task_id INTEGER NOT NULL,
+    PRIMARY KEY (day, task_id),
+    FOREIGN KEY (task_id) REFERENCES task(id)
+);`
+
+	_, err = conn.Exec(createSchedule)
+	if err != nil {
+		log.Printf("%q: %s\n", err, createSchedule)
+		return
+	}
+
+	createSummary := `CREATE TABLE IF NOT EXISTS summary (
+    task_id INTEGER NOT NULL,
+    weekly_spent INTEGER DEFAULT 0,
+    monthly_spent INTEGER DEFAULT 0,
+    yearly_spent INTEGER DEFAULT 0,
+    PRIMARY KEY (task_id),
+    FOREIGN KEY (task_id) REFERENCES task(id)
+);`
+
+	_, err = conn.Exec(createSummary)
+	if err != nil {
+		log.Printf("%q: %s\n", err, createSummary)
+		return
+	}
+}
+
+func ConnectTestDB() *sql.DB {
+	conn, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	createTable(conn)
+	return conn
+}
