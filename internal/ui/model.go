@@ -8,11 +8,14 @@ import (
 type Model struct {
 	TaskService *task.TaskService
 	EditTab     tea.Model
+	createTask  TaskCreationModel
 }
 
 func newModel(ts *task.TaskService) Model {
+	tc := initialTaskCreation()
 	return Model{
 		TaskService: ts,
+		createTask:  tc,
 	}
 }
 
@@ -20,10 +23,13 @@ func (m Model) Init() tea.Cmd {
 	var cmds []tea.Cmd
 
 	cmds = append(cmds, tea.EnterAltScreen)
+	cmds = append(cmds, m.createTask.Init())
 	return tea.Batch(cmds...)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -31,9 +37,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	}
-	return m, nil
+	updatedCreateTask, cmd := m.createTask.Update(msg)
+	m.createTask = updatedCreateTask.(TaskCreationModel)
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	return "This is the model"
+	return m.createTask.View()
 }

@@ -7,8 +7,8 @@ type Task struct {
 	Name          string
 	Description   string
 	TimeSpent     time.Duration
-	Schedule      map[string]bool
 	RecurringDays []time.Weekday
+	Tags          []string
 }
 
 type DailyTask struct {
