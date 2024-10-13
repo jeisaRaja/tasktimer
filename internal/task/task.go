@@ -9,6 +9,7 @@ type Task struct {
 	TimeSpent     time.Duration
 	RecurringDays []time.Weekday
 	Tags          []string
+	WeeklyTarget  time.Duration
 }
 
 type DailyTask struct {

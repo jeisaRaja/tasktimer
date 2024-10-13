@@ -1,8 +1,5 @@
 package ui
 
-// A simple example demonstrating the use of multiple text input components
-// from the Bubbles component library.
-
 import (
 	"fmt"
 	"strings"
@@ -28,6 +25,7 @@ var (
 type TaskCreationModel struct {
 	focusIndex int
 	inputs     []textinput.Model
+	fieldLen   int
 	cursorMode cursor.Mode
 }
 
@@ -36,25 +34,25 @@ func initialTaskCreation() TaskCreationModel {
 		inputs: make([]textinput.Model, 2),
 	}
 
-	var t textinput.Model
-	for i := range m.inputs {
-		t = textinput.New()
-		t.Cursor.Style = cursorStyle
-		t.CharLimit = 32
+	nameInput := textinput.New()
+	nameInput.Placeholder = "New Task Name"
+	nameInput.PromptStyle = focusedStyle
+	nameInput.TextStyle = focusedStyle
+	nameInput.Focus()
 
-		switch i {
-		case 0:
-			t.Placeholder = "Task Name"
-			t.Focus()
-			t.PromptStyle = focusedStyle
-			t.TextStyle = focusedStyle
-		case 1:
-			t.Placeholder = "Description"
-			t.CharLimit = 64
-		}
+	descriptionInput := textinput.New()
+	descriptionInput.Placeholder = "Description (optional)"
 
-		m.inputs[i] = t
-	}
+	durationInput := textinput.New()
+	durationInput.Placeholder = "Weekly Target Duration (in hours)"
+
+	tagsInput := textinput.New()
+	tagsInput.Placeholder = "Tags (optional, comma-separated)"
+
+	inputs := []textinput.Model{nameInput, descriptionInput, durationInput, tagsInput}
+
+	m.inputs = inputs
+	m.fieldLen = len(inputs)
 
 	return m
 }
@@ -64,6 +62,7 @@ func (m TaskCreationModel) Init() tea.Cmd {
 }
 
 func (m TaskCreationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -145,4 +144,3 @@ func (m TaskCreationModel) View() string {
 
 	return b.String()
 }
-

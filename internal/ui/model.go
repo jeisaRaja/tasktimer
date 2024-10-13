@@ -6,16 +6,23 @@ import (
 )
 
 type Model struct {
-	TaskService *task.TaskService
-	EditTab     tea.Model
-	createTask  TaskCreationModel
+	taskService *task.TaskService
+	views       []tea.Model
+	activeView  tea.Model
 }
 
 func newModel(ts *task.TaskService) Model {
-	tc := initialTaskCreation()
+	var views []tea.Model
+	createTask := initialTaskCreation()
+	todayTask := initialTodayTaskModel()
+
+	views = append(views, createTask)
+	views = append(views, todayTask)
+
 	return Model{
-		TaskService: ts,
-		createTask:  tc,
+		taskService: ts,
+		views:       views,
+		activeView:  todayTask,
 	}
 }
 
@@ -23,13 +30,14 @@ func (m Model) Init() tea.Cmd {
 	var cmds []tea.Cmd
 
 	cmds = append(cmds, tea.EnterAltScreen)
-	cmds = append(cmds, m.createTask.Init())
+	for _, view := range m.views {
+		cmds = append(cmds, view.Init())
+	}
 	return tea.Batch(cmds...)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
-	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -37,12 +45,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	}
-	updatedCreateTask, cmd := m.createTask.Update(msg)
-	m.createTask = updatedCreateTask.(TaskCreationModel)
+
+	activeView, cmd := m.activeView.Update(msg)
+	m.activeView = activeView
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	return m.createTask.View()
+	return m.activeView.View()
 }
