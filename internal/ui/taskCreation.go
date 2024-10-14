@@ -2,12 +2,15 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jeisaRaja/tasktimer/internal/models"
 )
 
 var (
@@ -66,6 +69,25 @@ func (m TaskCreationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+s":
+			durationString := m.inputs[2].Value()
+			durationInt, err := strconv.Atoi(durationString)
+			if err != nil {
+				fmt.Println("Error converting string to int:", err)
+			}
+
+			duration := time.Duration(durationInt) * time.Second
+
+			fmt.Println("Duration:", duration)
+
+			tags := strings.Split(m.inputs[3].Value(), ",")
+			task := models.Task{
+				Name:         m.inputs[0].Value(),
+				Description:  m.inputs[1].Value(),
+				WeeklyTarget: duration,
+				Tags:         tags,
+			}
+			return m, createInsertTaskMsg(task)
 		case "ctrl+c", "esc":
 			return m, tea.Quit
 

@@ -5,24 +5,24 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jeisaRaja/tasktimer/internal/task"
+	"github.com/jeisaRaja/tasktimer/internal/models"
 )
 
 type TodayTaskModel struct {
 	day       time.Weekday
-	tasks     []task.Task
+	tasks     []models.Task
 	currIndex int
 }
 
 func initialTodayTaskModel() TodayTaskModel {
 	currDay := time.Now().Weekday()
-	var tasks []task.Task
+	var tasks []models.Task
 
-	tasks = append(tasks, task.Task{Name: "Code"})
-	tasks = append(tasks, task.Task{Name: "Read"})
-	tasks = append(tasks, task.Task{Name: "Run"})
-	tasks = append(tasks, task.Task{Name: "Walk"})
-	tasks = append(tasks, task.Task{Name: "Watch"})
+	tasks = append(tasks, models.Task{Name: "Code"})
+	tasks = append(tasks, models.Task{Name: "Read"})
+	tasks = append(tasks, models.Task{Name: "Run"})
+	tasks = append(tasks, models.Task{Name: "Walk"})
+	tasks = append(tasks, models.Task{Name: "Watch"})
 
 	m := TodayTaskModel{
 		day:   currDay,

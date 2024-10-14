@@ -9,10 +9,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Storage struct {
+	*sql.DB
+}
+
 // ConnectDB initializes a connection to sqlite database,
 // creating db file `tasktimer.db` in current working directory.
 // It also creates necessary tables for the program
-func ConnectDB() *sql.DB {
+func ConnectDB() *Storage {
 	var dbPath string
 
 	baseDir, err := os.Getwd()
@@ -25,11 +29,10 @@ func ConnectDB() *sql.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
 
 	createTable(conn)
 
-	return conn
+	return &Storage{conn}
 }
 
 // createTable creates the required tables for the task management system
@@ -42,7 +45,9 @@ func createTable(conn *sql.DB) {
     description TEXT,
     time_spent INTEGER DEFAULT 0, 
     schedule TEXT,
-    recurring_days TEXT
+    recurring_days TEXT,
+    weekly_target INTEGER,
+    tags TEXT
 );`
 
 	_, err := conn.Exec(createTask)
