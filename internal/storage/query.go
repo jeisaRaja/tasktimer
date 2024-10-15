@@ -3,9 +3,30 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/jeisaRaja/tasktimer/internal/models"
 )
+
+func (s *Storage) UpdateGeneratedDate() error {
+	today := time.Now().Truncate(24 * time.Hour)
+	_, err := s.DB.Exec("INSERT OR REPLACE INTO last_generated (id, date) VALUES (1, ?)", today)
+	return err
+}
+
+func (s *Storage) HasGeneratedToday() (bool, error) {
+	var lastDate time.Time
+
+	query := `
+    SELECT date FROM last_generated LIMIT 1
+  `
+	err := s.DB.QueryRow(query).Scan(&lastDate)
+	if err != nil {
+		return false, err
+	}
+
+	return lastDate.Equal(time.Now().Truncate(24 * time.Hour)), nil
+}
 
 func (s *Storage) InsertTask(task models.Task) error {
 	recurringDaysJSON, err := json.Marshal(task.RecurringDays)
@@ -28,3 +49,22 @@ func (s *Storage) InsertTask(task models.Task) error {
 
 	return nil
 }
+
+func (s *Storage) InsertDailyTask(task models.DailyTask) error {
+	taskDate := task.Date.Format("2006-01-02")
+	query := `
+    INSERT INTO daily_tasks (task_id, date, daily_target, time_spent)
+    VALUES (?, ?, ?, ?)
+  `
+
+	_, err := s.DB.Exec(query, task.TaskID, taskDate, task.DailyTarget.Seconds(), task.TimeSpent.Seconds())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// func (s *Storage) SelectTodayDailyTasks() ([]models.DailyTask, error) {
+//   query := ``
+// }

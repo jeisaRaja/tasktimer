@@ -2,7 +2,6 @@ package task
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/jeisaRaja/tasktimer/internal/models"
 	"github.com/jeisaRaja/tasktimer/internal/storage"
@@ -22,6 +21,16 @@ func NewTaskService(db *storage.Storage) *TaskService {
 // The opts parameter is a variadic list of functions that modify the Task instance.
 // Each function takes a pointer to the Task and applies specific changes or configurations.
 func (ts *TaskService) New(task models.Task) error {
+	if err := ts.validateTask(&task); err != nil {
+		return err
+	}
+
+	if task.RecurringDays != nil && len(task.RecurringDays) > 0 {
+		if err := ts.handleRecurringTask(&task); err != nil {
+			return fmt.Errorf("error processing recurring task: %w", err)
+		}
+	}
+
 	err := ts.db.InsertTask(task)
 	if err != nil {
 		return fmt.Errorf("there is an error while inserting task: %w", err)
@@ -29,14 +38,26 @@ func (ts *TaskService) New(task models.Task) error {
 	return nil
 }
 
-func WithDescription(description string) func(*models.Task) {
-	return func(t *models.Task) {
-		t.Description = description
+func (ts *TaskService) NewDailyTask(task models.DailyTask) error {
+	err := ts.db.InsertDailyTask(task)
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func WithRecurringDays(days []time.Weekday) func(*models.Task) {
-	return func(t *models.Task) {
-		t.RecurringDays = days
+func (ts *TaskService) validateTask(task *models.Task) error {
+	if task.Name == "" {
+		return fmt.Errorf("task name cannot be empty")
 	}
+	if task.TimeSpent < 0 {
+		return fmt.Errorf("time spent cannot be negative")
+	}
+	return nil
+}
+
+func (ts *TaskService) handleRecurringTask(task *models.Task) error {
+	fmt.Printf("Recurring task setup for days: %v\n", task.RecurringDays)
+	return nil
 }

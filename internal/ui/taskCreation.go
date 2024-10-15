@@ -78,9 +78,10 @@ func (m TaskCreationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			duration := time.Duration(durationInt) * time.Second
 
-			fmt.Println("Duration:", duration)
-
 			tags := strings.Split(m.inputs[3].Value(), ",")
+			for i := range tags {
+				tags[i] = strings.TrimSpace(tags[i])
+			}
 			task := models.Task{
 				Name:         m.inputs[0].Value(),
 				Description:  m.inputs[1].Value(),

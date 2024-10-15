@@ -32,7 +32,13 @@ func ConnectDB() *Storage {
 
 	createTable(conn)
 
-	return &Storage{conn}
+	storage := &Storage{conn}
+	hasGenerated, err := storage.HasGeneratedToday()
+	if !hasGenerated {
+		storage.UpdateGeneratedDate()
+	}
+
+	return storage
 }
 
 // createTable creates the required tables for the task management system
@@ -41,7 +47,7 @@ func ConnectDB() *Storage {
 func createTable(conn *sql.DB) {
 	createTask := `CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     description TEXT,
     time_spent INTEGER DEFAULT 0, 
     schedule TEXT,
@@ -97,6 +103,18 @@ func createTable(conn *sql.DB) {
 	if err != nil {
 		log.Printf("%q: %s\n", err, createSummary)
 		return
+	}
+
+	createLastGenerated := `
+  CREATE TABLE IF NOT EXISTS last_generated (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE NOT NULL
+);
+  `
+
+	_, err = conn.Exec(createLastGenerated)
+	if err != nil {
+		log.Printf("%q: %s\n", err, createLastGenerated)
 	}
 }
 
