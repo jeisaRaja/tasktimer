@@ -6,27 +6,29 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jeisaRaja/tasktimer/internal/models"
+	"github.com/jeisaRaja/tasktimer/internal/task"
 )
 
 type TodayTaskModel struct {
-	day       time.Weekday
-	tasks     []models.Task
-	currIndex int
+	day         time.Weekday
+	tasks       []models.Task
+	currIndex   int
+	taskService *task.TaskService
 }
 
-func initialTodayTaskModel() TodayTaskModel {
+func initialTodayTaskModel(ts *task.TaskService) TodayTaskModel {
 	currDay := time.Now().Weekday()
 	var tasks []models.Task
 
-	tasks = append(tasks, models.Task{Name: "Code"})
-	tasks = append(tasks, models.Task{Name: "Read"})
-	tasks = append(tasks, models.Task{Name: "Run"})
-	tasks = append(tasks, models.Task{Name: "Walk"})
-	tasks = append(tasks, models.Task{Name: "Watch"})
+	tasks, err := ts.GetTasks()
+	if err != nil {
+		panic(err)
+	}
 
 	m := TodayTaskModel{
-		day:   currDay,
-		tasks: tasks,
+		day:         currDay,
+		tasks:       tasks,
+		taskService: ts,
 	}
 
 	return m
@@ -38,6 +40,9 @@ func (m TodayTaskModel) Init() tea.Cmd {
 
 func (m TodayTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case TaskUpdateMsg:
+		m.tasks = msg
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "j", "down", "tab":
@@ -69,4 +74,14 @@ func (m TodayTaskModel) View() string {
 	}
 
 	return b.String()
+}
+
+func (m TodayTaskModel) Refresh() tea.Cmd {
+	tasks, err := m.taskService.GetTasks()
+	if err != nil {
+		return nil
+	}
+	return func() tea.Msg {
+		return TaskUpdateMsg(tasks)
+	}
 }

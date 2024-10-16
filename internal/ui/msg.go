@@ -14,3 +14,9 @@ func createInsertTaskMsg(task models.Task) tea.Cmd {
 type InsertTaskMsg struct {
 	Task models.Task
 }
+
+type FetchTasksMsg struct {
+	Tasks []models.Task
+}
+
+type TaskUpdateMsg []models.Task

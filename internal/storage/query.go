@@ -65,6 +65,34 @@ func (s *Storage) InsertDailyTask(task models.DailyTask) error {
 	return nil
 }
 
-// func (s *Storage) SelectTodayDailyTasks() ([]models.DailyTask, error) {
-//   query := ``
-// }
+// GetAllTasks retrieves all tasks from the database.
+// It executes a SQL query to fetch tasks including their ID, name, description, time spent, weekly target, and tags.
+// The tags are stored in the database as a JSON string, so the function unmarshals them into a slice of strings ([]string) in Go.
+func (s *Storage) GetAllTasks() ([]models.Task, error) {
+	var tasks []models.Task
+	query := `SELECT id, name, description, time_spent, weekly_target, tags FROM tasks;`
+	result, err := s.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer result.Close()
+
+	for result.Next() {
+		var task models.Task
+		var tagsJSON string
+		err := result.Scan(&task.ID, &task.Name, &task.Description, &task.TimeSpent, &task.WeeklyTarget, &tagsJSON)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal([]byte(tagsJSON), &task.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling tags: %w", err)
+		}
+		tasks = append(tasks, task)
+	}
+	if err := result.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}

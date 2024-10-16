@@ -61,3 +61,15 @@ func (ts *TaskService) handleRecurringTask(task *models.Task) error {
 	fmt.Printf("Recurring task setup for days: %v\n", task.RecurringDays)
 	return nil
 }
+
+func (ts *TaskService) GetTasks(args ...string) ([]models.Task, error) {
+	if len(args) == 0 {
+		res, err := ts.db.GetAllTasks()
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+
+	return nil, nil
+}

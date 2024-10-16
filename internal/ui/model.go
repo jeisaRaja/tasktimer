@@ -14,8 +14,8 @@ type Model struct {
 
 func newModel(ts *task.TaskService) Model {
 	var views []tea.Model
-	todayTask := initialTodayTaskModel()
-	createTask := initialTaskCreation()
+	todayTask := initialTodayTaskModel(ts)
+	createTask := initialTaskCreation(ts)
 
 	views = append(views, todayTask)
 	views = append(views, createTask)
@@ -42,12 +42,20 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case TaskUpdateMsg:
+		viewModel, cmd := m.activeView.Update(msg)
+		m.activeView = viewModel
+		return m, cmd
 	case InsertTaskMsg:
 		err := m.taskService.New(msg.Task)
 		if err != nil {
 			panic(err)
 		}
 		m.activeView = m.views[0]
+		if view, ok := m.activeView.(TodayTaskModel); ok {
+			refreshCmd := view.Refresh()
+			return m, refreshCmd
+		}
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
