@@ -10,10 +10,9 @@ import (
 )
 
 type TodayTaskModel struct {
-	day         time.Weekday
-	tasks       []models.Task
-	currIndex   int
-	taskService *task.TaskService
+	day       time.Weekday
+	tasks     []models.Task
+	currIndex int
 }
 
 func initialTodayTaskModel(ts *task.TaskService) TodayTaskModel {
@@ -26,9 +25,8 @@ func initialTodayTaskModel(ts *task.TaskService) TodayTaskModel {
 	}
 
 	m := TodayTaskModel{
-		day:         currDay,
-		tasks:       tasks,
-		taskService: ts,
+		day:   currDay,
+		tasks: tasks,
 	}
 
 	return m
@@ -76,12 +74,7 @@ func (m TodayTaskModel) View() string {
 	return b.String()
 }
 
-func (m TodayTaskModel) Refresh() tea.Cmd {
-	tasks, err := m.taskService.GetTasks()
-	if err != nil {
-		return nil
-	}
-	return func() tea.Msg {
-		return TaskUpdateMsg(tasks)
-	}
+func (m TodayTaskModel) AppendTask(task models.Task) TodayTaskModel {
+	m.tasks = append(m.tasks, task)
+	return m
 }

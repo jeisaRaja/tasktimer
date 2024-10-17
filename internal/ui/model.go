@@ -53,8 +53,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.activeView = m.views[0]
 		if view, ok := m.activeView.(TodayTaskModel); ok {
-			refreshCmd := view.Refresh()
-			return m, refreshCmd
+			ttm := view.AppendTask(msg.Task)
+			m.activeView = ttm
 		}
 		return m, nil
 	case tea.KeyMsg:

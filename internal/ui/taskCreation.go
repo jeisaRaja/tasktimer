@@ -27,11 +27,10 @@ var (
 )
 
 type TaskCreationModel struct {
-	focusIndex  int
-	inputs      []textinput.Model
-	fieldLen    int
-	cursorMode  cursor.Mode
-	taskService *task.TaskService
+	focusIndex int
+	inputs     []textinput.Model
+	fieldLen   int
+	cursorMode cursor.Mode
 }
 
 func initialTaskCreation(ts *task.TaskService) TaskCreationModel {
@@ -58,7 +57,6 @@ func initialTaskCreation(ts *task.TaskService) TaskCreationModel {
 
 	m.inputs = inputs
 	m.fieldLen = len(inputs)
-	m.taskService = ts
 
 	return m
 }
@@ -73,25 +71,9 @@ func (m TaskCreationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+s":
-			durationString := m.inputs[2].Value()
-			durationInt, err := strconv.Atoi(durationString)
-			if err != nil {
-				fmt.Println("Error converting string to int:", err)
-			}
-
-			duration := time.Duration(durationInt) * time.Second
-
-			tags := strings.Split(m.inputs[3].Value(), ",")
-			for i := range tags {
-				tags[i] = strings.TrimSpace(tags[i])
-			}
-			task := models.Task{
-				Name:         m.inputs[0].Value(),
-				Description:  m.inputs[1].Value(),
-				WeeklyTarget: duration,
-				Tags:         tags,
-			}
+			task := createTaskFromInput(m.inputs)
 			return m, createInsertTaskMsg(task)
+
 		case "ctrl+c", "esc":
 			return m, tea.Quit
 
@@ -169,4 +151,26 @@ func (m TaskCreationModel) View() string {
 	}
 
 	return b.String()
+}
+
+func createTaskFromInput(inputs []textinput.Model) models.Task {
+	durationString := inputs[2].Value()
+	durationInt, err := strconv.Atoi(durationString)
+	if err != nil {
+		fmt.Println("Error converting string to int:", err)
+	}
+
+	duration := time.Duration(durationInt) * time.Second
+
+	tags := strings.Split(inputs[3].Value(), ",")
+	for i := range tags {
+		tags[i] = strings.TrimSpace(tags[i])
+	}
+	task := models.Task{
+		Name:         inputs[0].Value(),
+		Description:  inputs[1].Value(),
+		WeeklyTarget: duration,
+		Tags:         tags,
+	}
+	return task
 }
