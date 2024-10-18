@@ -120,12 +120,15 @@ func createTable(conn *sql.DB) {
 
 // ConnectTestDB establishes a connection to an in-memory sqlite database
 // for testing purposes.
-func ConnectTestDB() *sql.DB {
-	conn, err := sql.Open("sqlite3", ":memory:")
+func ConnectTestDB() *Storage {
+	sqlConn, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		log.Fatal(err)
 	}
+	storage := Storage{
+		sqlConn,
+	}
 
-	createTable(conn)
-	return conn
+	createTable(storage.DB)
+	return &storage
 }

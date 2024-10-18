@@ -8,15 +8,15 @@ import (
 )
 
 func TestConnectDB(t *testing.T) {
-	conn := ConnectTestDB()
-	if conn == nil {
+	store := ConnectTestDB()
+	if store == nil {
 		t.Fatal("Failed to connect to the database.")
 	}
 
 	tables := []string{"tasks", "daily_tasks", "schedule", "summary"}
 
 	for _, table := range tables {
-		if !checkTableExists(conn, table) {
+		if !checkTableExists(store.DB, table) {
 			t.Fatalf("Table %s does not exist after initialization.", table)
 		}
 	}

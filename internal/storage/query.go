@@ -8,12 +8,16 @@ import (
 	"github.com/jeisaRaja/tasktimer/internal/models"
 )
 
+// UpdateGeneratedDate sets the 'date' in 'last_generated' to today's date, replacing any existing record with 'id' 1.
+// Returns an error if the operation fails.
 func (s *Storage) UpdateGeneratedDate() error {
 	today := time.Now().Truncate(24 * time.Hour)
 	_, err := s.DB.Exec("INSERT OR REPLACE INTO last_generated (id, date) VALUES (1, ?)", today)
 	return err
 }
 
+// HasGeneratedToday checks if the 'last_generated' table has a record with today's date.
+// It returns true if the process was generated today, false otherwise, along with any query error.
 func (s *Storage) HasGeneratedToday() (bool, error) {
 	var lastDate time.Time
 
@@ -41,8 +45,10 @@ func (s *Storage) InsertTask(task models.Task) error {
 		INSERT INTO tasks (name, description, time_spent, recurring_days, tags, weekly_target)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`
+	intTimeSpent := int64(task.TimeSpent.Nanoseconds())
+	intWeeklyTarget := int64(task.WeeklyTarget.Nanoseconds())
 
-	_, err = s.DB.Exec(query, task.Name, task.Description, task.TimeSpent.Seconds(), recurringDaysJSON, tagsJSON, task.WeeklyTarget.Seconds())
+	_, err = s.DB.Exec(query, task.Name, task.Description, intTimeSpent, recurringDaysJSON, tagsJSON, intWeeklyTarget)
 	if err != nil {
 		return fmt.Errorf("errorr inserting task: %w", err)
 	}
@@ -82,7 +88,7 @@ func (s *Storage) GetAllTasks() ([]models.Task, error) {
 		var tagsJSON string
 		err := result.Scan(&task.ID, &task.Name, &task.Description, &task.TimeSpent, &task.WeeklyTarget, &tagsJSON)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Scan failed, %v, task: %v", err, task)
 		}
 		err = json.Unmarshal([]byte(tagsJSON), &task.Tags)
 		if err != nil {
