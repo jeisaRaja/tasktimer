@@ -14,12 +14,12 @@ type TodayTaskModel struct {
 	currIndex int
 }
 
-func initialTodayTaskModel() TodayTaskModel {
+func initialTodayTaskModel(tasks []models.TaskWithDaily) TodayTaskModel {
 	currDay := time.Now().Weekday()
 
 	m := TodayTaskModel{
 		day:       currDay,
-		tasks:     []models.TaskWithDaily{},
+		tasks:     tasks,
 		currIndex: 0,
 	}
 

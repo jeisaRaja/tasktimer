@@ -1,7 +1,11 @@
 package ui
 
 import (
+	"fmt"
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jeisaRaja/tasktimer/internal/models"
 	"github.com/jeisaRaja/tasktimer/internal/task"
 )
 
@@ -13,7 +17,11 @@ type Model struct {
 
 func newModel(ts *task.TaskService) Model {
 	views := make([]tea.Model, 3)
-	todayTask := initialTodayTaskModel()
+	tasksToday, err := ts.GetTodayTasks()
+	if err != nil {
+		panic(fmt.Sprintf("something went wrong in newModel: %v", err))
+	}
+	todayTask := initialTodayTaskModel(tasksToday)
 	createTask := initialTaskCreation()
 	taskSelector := initialTaskSelector()
 
@@ -43,12 +51,17 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case TaskSelectMsg:
+		err := m.handleTaskSelect(msg)
+		if err != nil {
+			panic(err)
+		}
 	case TaskUpdateMsg:
 		viewModel, cmd := m.activeView.Update(msg)
 		m.activeView = viewModel
 		return m, cmd
 	case InsertTaskMsg:
-		err := m.taskService.New(msg.Task)
+		err := m.taskService.NewTask(msg.Task)
 		if err != nil {
 			panic(err)
 		}
@@ -84,4 +97,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	return m.activeView.View()
+}
+
+func (m *Model) handleTaskSelect(msg TaskSelectMsg) error {
+	taskWithDaily := models.TaskWithDaily{
+		Task: models.Task{
+			ID:            msg.ID,
+			Name:          msg.Name,
+			Description:   msg.Description,
+			RecurringDays: msg.RecurringDays,
+			Tags:          msg.Tags,
+			WeeklyTarget:  msg.WeeklyTarget,
+		},
+		DailyTask: models.DailyTask{
+			TaskID:      msg.ID,
+			Date:        time.Now(),
+			DailyTarget: time.Hour,
+			TimeSpent:   0,
+		},
+	}
+
+	if err := m.taskService.InsertDailyTask(taskWithDaily.DailyTask); err != nil {
+		return fmt.Errorf("error in model.go: %v", err)
+	}
+
+	todayTaskModel := m.views[viewTodayTask].(TodayTaskModel)
+	todayTaskModel = todayTaskModel.AppendTask(taskWithDaily)
+	m.views[viewTodayTask] = todayTaskModel
+
+	m.activeView = m.views[viewTodayTask]
+
+	return nil
 }

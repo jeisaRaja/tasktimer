@@ -3,6 +3,8 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jeisaRaja/tasktimer/internal/models"
@@ -108,14 +110,14 @@ func (s *Storage) GetAllTasks() ([]models.Task, error) {
 func (s *Storage) GetTodayTasks() ([]models.TaskWithDaily, error) {
 	var tasks []models.TaskWithDaily
 
-	today := time.Now().Truncate(time.Hour * 24)
+	today := time.Now().Format("2006-01-02")
 
 	query := `
         SELECT 
-            t.ID, t.Name, t.Description, t.TimeSpent, t.RecurringDays, t.Tags, t.WeeklyTarget,
-            dt.TaskID, dt.Date, dt.DailyTarget, dt.TimeSpent
+            t.ID, t.Name, t.Description, t.time_spent, t.recurring_days, t.tags, t.weekly_target,
+            dt.Task_ID, dt.Date, dt.Daily_Target, dt.Time_Spent
         FROM tasks t
-        JOIN daily_tasks dt ON t.ID = dt.TaskID
+        JOIN daily_tasks dt ON t.ID = dt.Task_ID
         WHERE dt.Date = $1
     `
 	rows, err := s.DB.Query(query, today)
@@ -129,13 +131,18 @@ func (s *Storage) GetTodayTasks() ([]models.TaskWithDaily, error) {
 		var task models.Task
 		var dailyTask models.DailyTask
 
+		var recurringDaysString string
+		var tagsString string
+
 		err := rows.Scan(
-			&task.ID, &task.Name, &task.Description, &task.TimeSpent, &task.RecurringDays, &task.Tags, &task.WeeklyTarget,
+			&task.ID, &task.Name, &task.Description, &task.TimeSpent, &recurringDaysString, &tagsString, &task.WeeklyTarget,
 			&dailyTask.TaskID, &dailyTask.Date, &dailyTask.DailyTarget, &dailyTask.TimeSpent,
 		)
 		if err != nil {
 			return nil, err
 		}
+		task.RecurringDays = parseRecurringDays(recurringDaysString)
+		task.Tags, _ = parseTags(tagsString)
 
 		taskWithDaily.Task = task
 		taskWithDaily.DailyTask = dailyTask
@@ -148,4 +155,33 @@ func (s *Storage) GetTodayTasks() ([]models.TaskWithDaily, error) {
 	}
 
 	return tasks, nil
+}
+
+func parseRecurringDays(daysString string) []time.Weekday {
+	var days []time.Weekday
+	if daysString == "" {
+		return days
+	}
+
+	parts := strings.Split(daysString, ",")
+	for _, part := range parts {
+		day, err := strconv.Atoi(strings.TrimSpace(part))
+		if err == nil && day >= 1 && day <= 7 {
+			days = append(days, time.Weekday(day-1))
+		}
+	}
+	return days
+}
+
+func parseTags(tagsString string) ([]string, error) {
+	var tags []string
+
+	if tagsString == "" || tagsString == "null" {
+		return tags, nil
+	}
+
+	if err := json.Unmarshal([]byte(tagsString), &tags); err != nil {
+		return nil, err
+	}
+	return tags, nil
 }

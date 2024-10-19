@@ -20,7 +20,7 @@ func NewTaskService(db *storage.Storage) *TaskService {
 // New creates a new Task instance with the provided name and optional configuration functions.
 // The opts parameter is a variadic list of functions that modify the Task instance.
 // Each function takes a pointer to the Task and applies specific changes or configurations.
-func (ts *TaskService) New(task models.Task) error {
+func (ts *TaskService) NewTask(task models.Task) error {
 	if err := ts.validateTask(&task); err != nil {
 		return err
 	}
@@ -82,4 +82,12 @@ func (ts *TaskService) GetTodayTasks() ([]models.TaskWithDaily, error) {
 	}
 
 	return tasks, nil
+}
+
+func (ts *TaskService) InsertDailyTask(task models.DailyTask) error {
+	err := ts.db.InsertDailyTask(task)
+	if err != nil {
+		return fmt.Errorf("failed to insert daily task: %w", err)
+	}
+	return nil
 }

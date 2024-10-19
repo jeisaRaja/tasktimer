@@ -20,3 +20,5 @@ type FetchTasksMsg struct {
 }
 
 type TaskUpdateMsg []models.TaskWithDaily
+
+type TaskSelectMsg models.Task
