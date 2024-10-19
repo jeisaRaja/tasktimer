@@ -6,27 +6,21 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jeisaRaja/tasktimer/internal/models"
-	"github.com/jeisaRaja/tasktimer/internal/task"
 )
 
 type TodayTaskModel struct {
 	day       time.Weekday
-	tasks     []models.Task
+	tasks     []models.TaskWithDaily
 	currIndex int
 }
 
-func initialTodayTaskModel(ts *task.TaskService) TodayTaskModel {
+func initialTodayTaskModel() TodayTaskModel {
 	currDay := time.Now().Weekday()
-	var tasks []models.Task
-
-	tasks, err := ts.GetTasks()
-	if err != nil {
-		panic(err)
-	}
 
 	m := TodayTaskModel{
-		day:   currDay,
-		tasks: tasks,
+		day:       currDay,
+		tasks:     []models.TaskWithDaily{},
+		currIndex: 0,
 	}
 
 	return m
@@ -74,7 +68,7 @@ func (m TodayTaskModel) View() string {
 	return b.String()
 }
 
-func (m TodayTaskModel) AppendTask(task models.Task) TodayTaskModel {
+func (m TodayTaskModel) AppendTask(task models.TaskWithDaily) TodayTaskModel {
 	m.tasks = append(m.tasks, task)
 	return m
 }

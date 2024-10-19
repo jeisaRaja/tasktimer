@@ -62,8 +62,10 @@ func (s *Storage) InsertDailyTask(task models.DailyTask) error {
     INSERT INTO daily_tasks (task_id, date, daily_target, time_spent)
     VALUES (?, ?, ?, ?)
   `
+	intDailyTarget := int64(task.DailyTarget.Nanoseconds())
+	intTimeSpent := int64(task.TimeSpent.Nanoseconds())
 
-	_, err := s.DB.Exec(query, task.TaskID, taskDate, task.DailyTarget.Seconds(), task.TimeSpent.Seconds())
+	_, err := s.DB.Exec(query, task.TaskID, taskDate, intDailyTarget, intTimeSpent)
 	if err != nil {
 		return err
 	}
@@ -97,6 +99,51 @@ func (s *Storage) GetAllTasks() ([]models.Task, error) {
 		tasks = append(tasks, task)
 	}
 	if err := result.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
+func (s *Storage) GetTodayTasks() ([]models.TaskWithDaily, error) {
+	var tasks []models.TaskWithDaily
+
+	today := time.Now().Truncate(time.Hour * 24)
+
+	query := `
+        SELECT 
+            t.ID, t.Name, t.Description, t.TimeSpent, t.RecurringDays, t.Tags, t.WeeklyTarget,
+            dt.TaskID, dt.Date, dt.DailyTarget, dt.TimeSpent
+        FROM tasks t
+        JOIN daily_tasks dt ON t.ID = dt.TaskID
+        WHERE dt.Date = $1
+    `
+	rows, err := s.DB.Query(query, today)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var taskWithDaily models.TaskWithDaily
+		var task models.Task
+		var dailyTask models.DailyTask
+
+		err := rows.Scan(
+			&task.ID, &task.Name, &task.Description, &task.TimeSpent, &task.RecurringDays, &task.Tags, &task.WeeklyTarget,
+			&dailyTask.TaskID, &dailyTask.Date, &dailyTask.DailyTarget, &dailyTask.TimeSpent,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		taskWithDaily.Task = task
+		taskWithDaily.DailyTask = dailyTask
+
+		tasks = append(tasks, taskWithDaily)
+	}
+
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 

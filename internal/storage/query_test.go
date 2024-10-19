@@ -3,6 +3,7 @@ package storage
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/jeisaRaja/tasktimer/internal/models"
 )
@@ -12,6 +13,8 @@ func TestGetAllTasks(t *testing.T) {
 	if store == nil {
 		t.Fatal("failed to conect to the database")
 	}
+	defer store.Close()
+
 	tasks := []models.Task{
 		{
 			Name:         "task1",
@@ -73,4 +76,54 @@ func insertTasks(db *Storage, tasks []models.Task) error {
 		}
 	}
 	return nil
+}
+
+func TestInsertDailyTask(t *testing.T) {
+	store := ConnectTestDB()
+	defer store.Close()
+	if store == nil {
+		t.Fatal("failed to connect to db")
+	}
+
+	task := models.DailyTask{
+		TaskID:      1,
+		Date:        time.Now(),
+		DailyTarget: time.Hour * 5,
+		TimeSpent:   time.Hour * 3,
+	}
+
+	err := store.InsertDailyTask(task)
+	if err != nil {
+		t.Fatalf("failed to insert dailytask: %v", err)
+	}
+
+	query := `SELECT task_id, date, daily_target, time_spent FROM daily_tasks WHERE task_id = ? LIMIT 1`
+	var retrievedTaskID int
+	var retrievedDate string
+	var retrievedDailyTarget, retrievedTimeSpent int64
+	err = store.DB.QueryRow(query, task.TaskID).Scan(&retrievedTaskID, &retrievedDate, &retrievedDailyTarget, &retrievedTimeSpent)
+	if err != nil {
+		t.Fatalf("failed to retrieve daily task: %v", err)
+	}
+
+	retrievedDateParsed, err := time.Parse(time.RFC3339, retrievedDate)
+	if err != nil {
+		t.Fatalf("failed to parse date: %v", err)
+	}
+
+	if retrievedTaskID != task.TaskID {
+		t.Errorf("expected task ID %d, got %d", task.TaskID, retrievedTaskID)
+	}
+
+	if !retrievedDateParsed.Equal(task.Date.Truncate(24 * time.Hour)) {
+		t.Errorf("expected date %v, got %v", task.Date.Truncate(24*time.Hour), retrievedDateParsed)
+	}
+
+	if retrievedDailyTarget != int64(task.DailyTarget.Nanoseconds()) {
+		t.Errorf("expected daily target %v, got %v", int64(task.DailyTarget.Nanoseconds()), retrievedDailyTarget)
+	}
+
+	if retrievedTimeSpent != int64(task.TimeSpent.Nanoseconds()) {
+		t.Errorf("expected time spent %v, got %v", int64(task.TimeSpent.Nanoseconds()), retrievedTimeSpent)
+	}
 }

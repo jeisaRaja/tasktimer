@@ -9,16 +9,17 @@ type Model struct {
 	taskService *task.TaskService
 	views       []tea.Model
 	activeView  tea.Model
-	viewIndex   int
 }
 
 func newModel(ts *task.TaskService) Model {
-	var views []tea.Model
-	todayTask := initialTodayTaskModel(ts)
-	createTask := initialTaskCreation(ts)
+	views := make([]tea.Model, 3)
+	todayTask := initialTodayTaskModel()
+	createTask := initialTaskCreation()
+	taskSelector := initialTaskSelector()
 
-	views = append(views, todayTask)
-	views = append(views, createTask)
+	views[viewTodayTask] = todayTask
+	views[viewCreateTask] = createTask
+	views[viewTaskSelector] = taskSelector
 
 	return Model{
 		taskService: ts,
@@ -51,21 +52,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			panic(err)
 		}
-		m.activeView = m.views[0]
-		if view, ok := m.activeView.(TodayTaskModel); ok {
-			ttm := view.AppendTask(msg.Task)
-			m.activeView = ttm
-		}
+		m.activeView = m.views[viewTodayTask]
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+a":
+			tasks, err := m.taskService.GetTasks()
+			if err != nil {
+				panic(err)
+			}
+			taskSelector := m.views[viewTaskSelector].(TaskSelector)
+			taskSelector.SetTasks(tasks)
+			m.views[viewTaskSelector] = taskSelector
+			m.activeView = m.views[viewTaskSelector]
+			return m, nil
 		case "ctrl+c":
 			return m, tea.Quit
 		case "ctrl+n":
-			m.activeView = m.views[1]
+			m.activeView = m.views[viewCreateTask]
 			return m, nil
 		case "esc":
-			m.activeView = m.views[0]
+			m.activeView = m.views[viewTodayTask]
 		}
 	}
 
@@ -77,14 +84,4 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	return m.activeView.View()
-}
-
-func (m Model) SwitchView() int {
-	view := m.viewIndex
-	view++
-	if view > len(m.views)-1 {
-		view = 0
-	}
-
-	return view
 }

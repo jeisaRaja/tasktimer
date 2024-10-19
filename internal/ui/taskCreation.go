@@ -11,7 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jeisaRaja/tasktimer/internal/models"
-	"github.com/jeisaRaja/tasktimer/internal/task"
 )
 
 var (
@@ -33,7 +32,7 @@ type TaskCreationModel struct {
 	cursorMode cursor.Mode
 }
 
-func initialTaskCreation(ts *task.TaskService) TaskCreationModel {
+func initialTaskCreation() TaskCreationModel {
 	m := TaskCreationModel{
 		inputs: make([]textinput.Model, 2),
 	}

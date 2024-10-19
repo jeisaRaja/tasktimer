@@ -73,3 +73,13 @@ func (ts *TaskService) GetTasks(args ...string) ([]models.Task, error) {
 
 	return nil, nil
 }
+
+func (ts *TaskService) GetTodayTasks() ([]models.TaskWithDaily, error) {
+	var tasks []models.TaskWithDaily
+	tasks, err := ts.db.GetTodayTasks()
+	if err != nil {
+		return nil, fmt.Errorf("error in taskService GetTodayTasks: %w", err)
+	}
+
+	return tasks, nil
+}

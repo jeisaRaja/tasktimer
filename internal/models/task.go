@@ -2,6 +2,11 @@ package models
 
 import "time"
 
+type TaskWithDaily struct {
+	Task
+	DailyTask
+}
+
 type Task struct {
 	ID            int
 	Name          string
