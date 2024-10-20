@@ -133,7 +133,17 @@ func (m *TaskCreationModel) updateInputs(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(m.inputs))
 
 	for i := range m.inputs {
-		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			if i == 2 {
+				if isNumeric(keyMsg.String()) || keyMsg.String() == "backspace" {
+					m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
+				} else {
+					continue
+				}
+			} else {
+				m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
+			}
+		}
 	}
 
 	return tea.Batch(cmds...)
@@ -172,4 +182,12 @@ func createTaskFromInput(inputs []textinput.Model) models.Task {
 		Tags:         tags,
 	}
 	return task
+}
+
+func (m TaskCreationModel) Clear() TaskCreationModel {
+	for i := range m.inputs {
+		m.inputs[i].Reset()
+	}
+
+	return m
 }

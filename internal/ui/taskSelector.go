@@ -32,7 +32,7 @@ func (m TaskSelector) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			return m, func() tea.Msg {
-				return TaskSelectMsg(m.list[m.curr])
+				return DailyTargetInputMsg(m.list[m.curr])
 			}
 		case "k":
 			m.curr -= 1

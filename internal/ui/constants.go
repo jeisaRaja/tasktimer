@@ -1,7 +1,8 @@
 package ui
 
 const (
-  viewTodayTask = iota
-  viewCreateTask
-  viewTaskSelector
+	viewTodayTask = iota
+	viewCreateTask
+	viewTaskSelector
+	viewDailyTargetInput
 )

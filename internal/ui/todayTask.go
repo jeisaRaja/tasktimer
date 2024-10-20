@@ -58,10 +58,14 @@ func (m TodayTaskModel) View() string {
 	for i := range m.tasks {
 		if i == m.currIndex {
 			b.WriteString(">")
+			b.WriteString(" ")
 			b.WriteString(m.tasks[i].Name)
 		} else {
+			b.WriteString("  ")
 			b.WriteString(m.tasks[i].Name)
 		}
+		b.WriteString(" ")
+		b.WriteString(m.tasks[i].DailyTarget.String())
 		b.WriteRune('\n')
 	}
 

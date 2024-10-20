@@ -118,7 +118,7 @@ func (s *Storage) GetTodayTasks() ([]models.TaskWithDaily, error) {
             dt.Task_ID, dt.Date, dt.Daily_Target, dt.Time_Spent
         FROM tasks t
         JOIN daily_tasks dt ON t.ID = dt.Task_ID
-        WHERE dt.Date = $1
+        WHERE dt.Date = '2024-10-20';
     `
 	rows, err := s.DB.Query(query, today)
 	if err != nil {
